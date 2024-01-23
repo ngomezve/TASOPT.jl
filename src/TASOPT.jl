@@ -18,6 +18,7 @@ using PyPlot
 # pygui(true)
 using Dates
 using ForwardDiff
+using IdealGases	
 
 const __TASOPTroot__ = @__DIR__
 

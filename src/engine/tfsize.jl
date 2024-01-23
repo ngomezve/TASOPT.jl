@@ -160,14 +160,6 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       Tmapl = [0.15, 0.15]
       Tmaph = [0.15, 0.15]
 
-      # from 'airfrac.inc'
-      # air fractions  
-      #        N2      O2      CO2    H2O      Ar       fuel
-      alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
-
-      # fuel fractions
-      beta = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
-
       #---- fractional core mass flow convergence tolerance
       toler = 1.0e-12
 
@@ -181,48 +173,23 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       #---- overall pressure ratio
       pic = pilc * pihc
 
-      #---- number of air constitutents (all but fuel)
-      nair = n - 1
-
-      # ===============================================================
-      #---- set combustion-change mass fractions gamma[i] for specified fuel
-      gamma = gasfuel(ifuel, n)
-
-      # Create buffer
-      buf = Zygote.Buffer(gamma, length(gamma))
-      for i = 1:length(gamma)
-            buf[i] = gamma[i]
-      end
-
-      #---- apply combustor efficiency
-      # Zygote.jl can not handle this...
-      # for i = 1:nair
-      #       gamma[i] = etab * gamma[i]
-      # end
-      # gamma[n] = 1.0 - etab
-
-      # Zygote can handle this
-      for i = 1:nair
-            buf[i] = etab * buf[i]
-      end
-      buf[n] = 1.0 - etab
-
-      gamma = copy(buf)
       #
       # ===============================================================
+      gas0 = IdealGases.Gas1D() #Initialize freestream gas
+
       #---- freestream static quantities
-      s0, dsdt, h0, dhdt, cp0, R0 = gassum(alpha, nair, T0)
-      gam0 = cp0 / (cp0 - R0)
+      gas0 = IdealGases.set_TP!(gas0, T0, p0)
+      _, _, s0, dsdt, h0, dhdt, cp0, R0 = gas_unpack(gas0)
+      
       u0 = M0 * a0
 
       # ===============================================================
       #---- freestream total quantities
-      hspec = h0 + 0.5 * u0^2
-      Tguess = T0 * (1.0 + 0.5 * (gam0 - 1.0) * M0^2)
-      Tt0 = gas_tset(alpha, nair, hspec, Tguess)
+      gast0 = deepcopy(gas0) #Initialize total freestream gas
+      IdealGases.gas_Mach!(gast0, M0, 0)
 
-      st0, dsdt, ht0, dhdt, cpt0, Rt0 = gassum(alpha, nair, Tt0)
-      pt0 = p0 * exp((st0 - s0) / Rt0)
+      Tt0, pt0, st0, dsdt, ht0, dhdt, cpt0, Rt0 = gas_unpack(gast0)
+
       at0 = sqrt(Tt0 * Rt0 * cpt0 / (cpt0 - Rt0))
 
       # ===============================================================
@@ -238,15 +205,12 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
       # ===============================================================
       #---- diffuser flow 0-2
-      Tt18 = Tt0
-      st18 = st0
-      ht18 = ht0
-      cpt18 = cpt0
-      Rt18 = Rt0
+      
       pt18 = pt0 * pid
-      epht = epht0
-      eplt = eplt0
+      gast18 = deepcopy(gast0)
+      gast18 = IdealGases.set_TP!(gast18, Tt0, pt18)
 
+      Tt18, pt18, st18, _, ht18, _, cpt18, Rt18 = gas_unpack(gast0)
 
       #---- initial guesses for station 2 and 1.9
       pt2 = pt18
@@ -307,19 +271,15 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
             #---- note: BL is assumed adiabatic, 
             #-     so Tt2,ht2,st2,cpt2,Rt2  will not change due to BL ingestion
-            Tt2 = Tt18
-            ht2 = ht18
-            st2 = st18
-            cpt2 = cpt18
-            Rt2 = Rt18
             pt2 = pt18 * exp(-sbfan)
+            gast2 = deepcopy(gast18)
+            IdealGases.set_TP!(gast2, Tt18, pt2)
+            Tt2, pt2, st2, _, ht2, _, cpt2, Rt2 = gas_unpack(gast2)
 
-            Tt19 = Tt18
-            ht19 = ht18
-            st19 = st18
-            cpt19 = cpt18
-            Rt19 = Rt18
             pt19 = pt18 * exp(-sbcore)
+            gast19 = deepcopy(gast18)
+            IdealGases.set_TP!(gast19, Tt19, pt19)
+            Tt19, pt19, st19, _, ht19, _, cpt19, Rt19 = gas_unpack(gast19)
 
             # ===============================================================
             #---- fan flow 2-7
@@ -329,24 +289,26 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
             epf, epf_pf, epf_mf = ecmap(pif, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
 
-            pt21, Tt21, ht21, st21, cpt21, Rt21 = gas_prat(alpha, nair,
-                  pt2, Tt2, ht2, st2, cpt2, Rt2, pif, epf)
+            gast21 = deepcopy(gast2)
+            IdealGases.compress(gast21, pif, epf)
+
+            Tt21, pt21, st21, _, ht21, _, cpt21, Rt21 = gas_unpack(gast21)
 
             #---- fan duct nozzle total quantities
             pt7 = pt21 * pifn
-            Tt7 = Tt21
-            ht7 = ht21
-            st7 = st21
-            cpt7 = cpt21
-            Rt7 = Rt21
+            
+            gast7 = deepcopy(gast21)
+            IdealGases.set_TP!(gast7, Tt21, pt7)
+            Tt7, pt7, st7, _, ht7, _, cpt7, Rt7 = gas_unpack(gast7)
 
             # ===============================================================
             #---- Compressor precooler 19 - 19c
             pt19c = pt19 - Δp_PreC
             ht19c = ht19 + Δh_PreC
-            Tt19c = gas_tset(alpha, nair, ht19c, Tt19)
-            st19c, _, ht19c, _, cpt19c, Rt19c = gassum(alpha, nair, Tt19c)
-
+            
+            gast19c = deepcopy(gast19)
+            IdealGases.set_hP!(gast19c, ht19c, pt19c)
+            Tt19c, pt19c, st19c, _, ht19c, _, cpt19c, Rt19c = gas_unpack(gast19c)
 
             #c      write(*,*) 'epf0 epf ', epf0, epf
             #
@@ -357,15 +319,19 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             ml = 1.0
             eplc, eplc_pl, eplc_ml = ecmap(pilc, ml, pilcD, mblcD, Cmapl, eplc0, 1.0, 0.0)
 
-            pt25, Tt25, ht25, st25, cpt25, Rt25 = gas_prat(alpha, nair,
-                  pt19c, Tt19c, ht19c, st19c, cpt19c, Rt19c, pilc, eplc)
+            gast25 = deepcopy(gast19c)
+            IdealGases.compress(gast25, pilc, eplc0)
+
+            Tt25, pt25, st25, _, ht25, _, cpt25, Rt25 = gas_unpack(gast25)
 
             # ===============================================================
             #---- Compressor intercooler 25 - 25c
             pt25c = pt25 - Δp_InterC
             ht25c = ht25 + Δh_InterC
-            Tt25c = gas_tset(alpha, nair, ht25c, Tt25)
-            st25c, _, ht25c, _, cpt25c, Rt25c = gassum(alpha, nair, Tt25c)
+            
+            gast25c = deepcopy(gast25)
+            IdealGases.set_hP!(gast25c, ht25c, pt25c)
+            Tt25c, pt25c, st25c, _, ht25c, _, cpt25c, Rt25c = gas_unpack(gast25c)
 
             # ===============================================================
             #---- HP compressor flow 25c - 3
@@ -373,16 +339,21 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             mbhcD = 1.0
             mh = 1.0
             ephc, ephc_ph, ephc_mh = ecmap(pihc, mh, pihcD, mbhcD, Cmaph, ephc0, 1.0, 0.0)
-            pt3, Tt3, ht3, st3, cpt3, Rt3 = gas_prat(alpha, nair,
-                  pt25c, Tt25c, ht25c, st25c, cpt25c, Rt25c, pihc, ephc)
+
+            gast3 = deepcopy(gast25c)
+            IdealGases.compress(gast3, pihc, ephc0)
+
+            Tt3, pt3, st3, _, ht3, _, cpt3, Rt3 = gas_unpack(gast3)
 
 
             # ===============================================================
             #---- combustor flow 3-4   (ffb = mdot_fuel/mdot_burner)
-            ffb, lambda = gas_burn(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tt4)
-            st4, dsdt, ht4, dhdt, cpt4, Rt4 = gassum(lambda, nair, Tt4)
+            ffb, gast4 = IdealGases.gas_burn(gast3, fuel, Ttf, Tt4, etab, 0.0)
+            
             pt4 = pt3 * pib
-            gam4 = cpt4 / (cpt4 - Rt4)
+            IdealGases.set_TP!(gast4, Tt4, Pt4)
+
+            _, _, st4, _, ht4, _, cpt4, Rt4 = gas_unpack(gast4)
 
             # ===============================================================
 
@@ -391,15 +362,9 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   #----- no cooling air present... station 41 is same as 4
                   ff = ffb * (1.0 - fo)
 
-                  pt41 = pt4
-                  Tt41 = Tt4
-                  ht41 = ht4
-                  st41 = st4
-                  cpt41 = cpt4
-                  Rt41 = Rt4
-                  for i = 1:nair
-                        lambdap[i] = lambda[i]
-                  end
+                  gast41 = deepcopy(gast4)
+                  Tt41, pt41, st41, _, ht41, _, cpt41, Rt41 = gas_unpack(gast41)
+
                   #
                   #----------------------------------------------------------------
             else
@@ -411,7 +376,9 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
                   # Heat exchanger to cool turbine cooling air
                   ht_tc = ht3 + Δh_TurbC #Specific enthalpy of turbine cooling air
-                  Tt_tc = gas_tset(alpha, nair, ht_tc, Tt3) #Temperature of turbine cooling air
+                  gast_tc = deepcopy(gast3)
+                  IdealGases.set_hP!(gast_tc, ht_tc, gast3.P)
+                  Tt_tc = gast_tc.T
 
                   if (icool == 1)
                         #------ epsrow(.) is assumed to be passed in.. calculate Tmrow(.)
@@ -440,17 +407,14 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   #----- set ff = mdot_fuel/mdot_core = ffb * mdot_burner/mdot_core
                   ff = (1.0 - fo - fc) * ffb
 
-                  pt4a = pt4
-                  Tt4a = Tt4
-                  ht4a = ht4
-                  st4a = st4
-                  cpt4a = cpt4
-                  Rt4a = Rt4
 
                   #----- speed at start-of-mixing station 4a
-                  p4a, T4a, h4a, s4a, cp4a, R4a = gas_mach(lambda, nair,
-                        pt4a, Tt4a, ht4a, st4a, cpt4a, Rt4a, 0.0, M4a, 1.0)
-                  u4sq = max(2.0 * (ht4a - h4a), 0.0)
+                  gas4a = deepcopy(gast4)
+                  IdealGases.gas_Mach!(gas4a, M4a, 0.0)
+
+                  T4a, p4a, s4a, _, h4a, _, cp4a, R4a = gas_unpack(gast41)
+
+                  u4sq = max(2.0 * (ht4 - h4a), 0.0)
                   u4a = sqrt(u4sq)
 
                   #----- exit speed of cooling air at station 4a

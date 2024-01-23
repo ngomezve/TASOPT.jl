@@ -1185,3 +1185,8 @@ function gas_tset_single(igas, hspec, tguess)
       println("gas_tset_single: convergence failed.  dT =", dt)
 
 end # gas_tset
+
+function gas_unpack(gas::AbstractGas)
+
+      return gas.T, gas.P, gas.s, gas.s_T, gas.h, gas.h_T, gas.cp, gas.R
+end
