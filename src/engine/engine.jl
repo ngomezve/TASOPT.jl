@@ -5,6 +5,7 @@ required in the aircraft sizing.
 module engine
 
 using StaticArrays
+using IdealGases
 
 export tfcalc!, mcool, Tmcalc, gas_tset, gaschem
 export tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!

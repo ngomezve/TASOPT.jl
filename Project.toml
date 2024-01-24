@@ -18,6 +18,7 @@ TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Trapz = "592b5752-818d-11e9-1e9a-2b8ca4a44cd1"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
+IdealGases = "d4fb33c0-2494-4384-b7a5-e5d0487b6649"
 
 [compat]
 julia = ">=1.8.4"

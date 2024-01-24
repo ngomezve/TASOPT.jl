@@ -1186,7 +1186,7 @@ function gas_tset_single(igas, hspec, tguess)
 
 end # gas_tset
 
-function gas_unpack(gas::AbstractGas)
+function gas_unpack(gas)
 
       return gas.T, gas.P, gas.s, gas.s_T, gas.h, gas.h_T, gas.cp, gas.R
 end
