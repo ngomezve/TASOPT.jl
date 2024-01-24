@@ -410,7 +410,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
                   #----- speed at start-of-mixing station 4a
                   gas4a = deepcopy(gast4)
-                  IdealGases.gas_Mach!(gas4a, M4a, 0.0)
+                  IdealGases.gas_Mach!(gas4a, 0.0, M4a)
 
                   T4a, p4a, s4a, _, h4a, _, cp4a, R4a = gas_unpack(gas4a)
 
