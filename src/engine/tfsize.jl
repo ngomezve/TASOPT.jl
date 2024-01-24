@@ -182,6 +182,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       _, _, s0, dsdt, h0, dhdt, cp0, R0 = gas_unpack(gas0)
       
       u0 = M0 * a0
+      gam0 = gas0.gamma
 
       # ===============================================================
       #---- freestream total quantities
@@ -467,14 +468,15 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             #     Trh =  Tt41/(Tt41 + dhht/cpt41)
             #     gexh = cpt41/(Rt41*epht0)
             #     pihtD = Trh^gexh
-
+            epht = epht0
             epi = 1.0 / epht
 
             gast45 = IdealGases.gas_Deltah(gast41, dhht, epi)
             Tt45, pt45, st45, _, ht45, _, cpt45, Rt45 = gas_unpack(gast45)
 
-
+            eplt = eplt0
             epi = 1.0 / eplt
+            
             gast49 = IdealGases.gas_Deltah(gast45, dhlt, epi)
             Tt49, pt49, st49, _, ht49, _, cpt49, Rt49 = gas_unpack(gast49)
 
