@@ -635,7 +635,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   #----- supersonic core plume... core nozzle is choked
                   M5 = 1.0
 
-                  gas5 = deepcopy(gast6)
+                  gas5 = deepcopy(gast5)
                   IdealGases.gas_Mach!(gas5, 0.0, M5, 1.0)
                   T5, p5, s5, _, h5, _, cp5, R5 = gas_unpack(gas5)
                   u5 = sqrt(2.0 * (ht5 - h5))
