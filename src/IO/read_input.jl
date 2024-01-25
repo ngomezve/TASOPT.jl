@@ -125,6 +125,17 @@ else
     error("Check engine position input... something isn't right")
 end
 
+#Engine model
+try 
+    engmodel = read_input("engine_model", options, doptions)
+    if engmodel == "MD"
+        pari[iiengmodel] = 0
+        
+    end
+catch #Default to MD model if model not specified
+    pari[iiengmodel] = 0
+
+end
 
 # Fuel related options
 fuel = read_input("Fuel", data, default)

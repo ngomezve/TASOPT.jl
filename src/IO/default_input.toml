@@ -39,6 +39,8 @@
 
 [Options] #
     optimize        = false   # Do you want TASOPT to optimize the aircraft or just size it 
+
+    engine_model = "MD" # "MD": Mark Drela original model
     
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"

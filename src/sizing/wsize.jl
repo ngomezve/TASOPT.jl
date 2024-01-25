@@ -27,8 +27,9 @@ function wsize(pari, parg, parm, para, pare,
     if pari[iiengmodel] == 0
         # Drela engine model
         use_NPSS = false
-    else
+        propcalc!(pare_sl, ip, icall, icool, initeng) = tfcalc!(pari, parg, para, pare_sl, ip, icall, icool, initeng)
         # NPSS
+    else
         use_NPSS = true
     end
 
@@ -1406,7 +1407,7 @@ function wsize(pari, parg, parm, para, pare,
                 inite1 = 1
             end
 
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+            ichoke5, ichoke7 = propcalc!(view(pare, :, ip), ip, icall, icool, inite1)
 
             # store engine design-point parameters for all operating points
             parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
@@ -1467,7 +1468,7 @@ function wsize(pari, parg, parm, para, pare,
             parg[iglnace] = lnace
 
             ipc1 = 1
-            time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, Nothing, Nothing, ipc1)
+            time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, Nothing, Nothing, ipc1, propcalc!)
             parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
         end
@@ -1557,7 +1558,7 @@ function wsize(pari, parg, parm, para, pare,
 
             icall = 1
             icool = 2
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+            ichoke5, ichoke7 = propcalc!(view(pare, :, ip), ip, icall, icool, inite1)
 
             # Tmetal was specified... set blade row cooling flow ratios for all points
             for jp = 1:iptotal
@@ -1890,14 +1891,14 @@ function wsize(pari, parg, parm, para, pare,
         icall = 1
         icool = 1
 
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+        ichoke5, ichoke7 = propcalc!(view(pare, :, ip), ip, icall, icool, inite1)
 
         # set rotation thrust for takeoff routine
         # (already available from cooling calculations)
         ip = iprotate
         icall = 1
         icool = 1
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+        ichoke5, ichoke7 = propcalc!(view(pare, :, ip), ip, icall, icool, inite1)
 
         # calculate takeoff and balanced-field lengths
         takeoff!(pari, parg, parm, para, pare, initeng, ichoke5, ichoke7)
