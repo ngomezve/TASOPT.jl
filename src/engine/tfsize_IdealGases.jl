@@ -148,7 +148,13 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
       Δp_PreC, Δp_InterC, Δp_Regen)
 
-      n = 6
+      Ytasopt = Dict(
+    "N2" => 0.7532,
+    "O2" => 0.2315,
+    "CO2" => 0.0006,
+    "H2O" => 0.0020,
+    "Ar" => 0.0127
+)
 
       # from 'tfmap.inc'
       #        a     b     k     mo     da    c    d     C    D
@@ -175,7 +181,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
       #
       # ===============================================================
-      gas0 = IdealGases.Gas() #Initialize freestream gas
+      gas0 = IdealGases.Gas(IdealGases.Xidict2Array(Ytasopt)) #Initialize freestream gas
 
       #---- freestream static quantities
       gas0 = IdealGases.set_TP!(gas0, T0, p0)
@@ -349,7 +355,8 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
             # ===============================================================
             #---- combustor flow 3-4   (ffb = mdot_fuel/mdot_burner)
-            fuel = "Jet-A(g)"
+            #fuel = "Jet-A(g)"
+            fuel = "CH4"
             ffb, gast4 = IdealGases.gas_burn(gast3, fuel, Ttf, Tt4, etab, 0.0)
             
             pt4 = pt3 * pib
@@ -430,10 +437,10 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   #       lambdap[i] = frac4 * lambda[i] + fracm * alpha[i]
                   # end
 
-                  gas41 = IdealGases.gas_mixing(gast3, gast4, frac4 / fracm)
+                  gas41 = IdealGases.gas_mixing(gast_tc, gast4, frac4 / fracm)
 
                   #----- mixed total enthalpy from enthalpy equation
-                  ht41 = frac4 * ht4 + fracm * ht3
+                  ht41 = frac4 * ht4 + fracm * ht_tc
 
                   #----- mixed velocity from momentum equation, assuming constant static pressure
                   p41 = p4a
@@ -450,7 +457,8 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   #----- all stagnation quantities, from total-static enthalpy difference
                   dhb = ht41 - h41
                   epi = 1.0
-                  gast41 = IdealGases.gas_Deltah(gas41, dhb, epi)
+                  gast41 = deepcopy(gas41)
+                  IdealGases.set_Δh!(gast41, dhb, epi)
 
                   Tt41, pt41, st41, _, ht41, _, cpt41, Rt41 = gas_unpack(gast41)
 
@@ -471,13 +479,15 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             epht = epht0
             epi = 1.0 / epht
 
-            gast45 = IdealGases.gas_Deltah(gast41, dhht, epi)
+            gast45 = deepcopy(gast41)
+            IdealGases.set_Δh!(gast45, dhht, epi)
             Tt45, pt45, st45, _, ht45, _, cpt45, Rt45 = gas_unpack(gast45)
 
             eplt = eplt0
             epi = 1.0 / eplt
-            
-            gast49 = IdealGases.gas_Deltah(gast45, dhlt, epi)
+
+            gast49 = deepcopy(gast45)
+            IdealGases.set_Δh!(gast49, dhlt, epi)
             Tt49, pt49, st49, _, ht49, _, cpt49, Rt49 = gas_unpack(gast49)
 
             # ===============================================================
