@@ -18,16 +18,14 @@ and iterates until the MTOW converges to within a specified tolerance.
     **Outputs:**
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
-function wsize(pari, parg, parm, para, pare,
+function wsize(pari, parg, parm, para, pare, propcalc!,
     itermax, wrlx1, wrlx2, wrlx3,
     initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
-
     time_propsys = 0.0
 
     if pari[iiengmodel] == 0
         # Drela engine model
         use_NPSS = false
-        propcalc!(pare_sl, ip, icall, icool, initeng) = tfcalc!(pari, parg, para, pare_sl, ip, icall, icool, initeng)
         # NPSS
     else
         use_NPSS = true
@@ -1890,7 +1888,6 @@ function wsize(pari, parg, parm, para, pare,
         ip = ipstatic
         icall = 1
         icool = 1
-
         ichoke5, ichoke7 = propcalc!(view(pare, :, ip), ip, icall, icool, inite1)
 
         # set rotation thrust for takeoff routine

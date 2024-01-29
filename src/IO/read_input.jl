@@ -137,6 +137,10 @@ catch #Default to MD model if model not specified
 
 end
 
+if pari[iiengmodel] == 0 #Drela's model
+    propcalc!(pare_sl, ip, icall, icool, initeng) = tfcalc!(pari, parg, para, pare_sl, ip, icall, icool, initeng)
+end
+
 # Fuel related options
 fuel = read_input("Fuel", data, default)
 dfuel = default["Fuel"]
@@ -797,7 +801,7 @@ catch #Do nothing if the heat exchanger field does not exist
 end
 
 return TASOPT.aircraft(name, description,
-pari, parg, parm, para, pare)
+pari, parg, parm, para, pare), propcalc!
 
 end
 
