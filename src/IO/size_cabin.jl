@@ -18,7 +18,7 @@ length.
     - `seats_per_row::Float64`: number of seats per row.
 """
 function place_cabin_seats(pax, Rfuse, seat_pitch = 30.0*in_to_m, 
-    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 10.0*in_to_m)
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
 
     cabin_offset = 10 * ft_to_m #Distance to the front and back of seats
     #TODO the hardcoded 10 ft is not elegant
@@ -31,6 +31,7 @@ function place_cabin_seats(pax, Rfuse, seat_pitch = 30.0*in_to_m,
         layout = seat_layouts[seats_per_row] #Find corresponding seat layour from seat dict
         Dmin = seats_per_row*seat_width + (length(layout) - 1)*2*aisle_halfwidth + 2*fuse_offset #New minimum diameter
     end
+    seats_per_row = seats_per_row - 1 #Subtract 1 seat to find maximum number of seats per row such that 2*Rfuse > Dmin
 
     rows = Int(ceil(pax / seats_per_row))
 
@@ -77,7 +78,7 @@ but can be supplied by the user.
 function arrange_seats(seats_per_row, Rfuse,
      seat_width = 19.0 * in_to_m, 
      aisle_halfwidth = 10.0 * in_to_m, 
-     fuse_offset = 10.0*in_to_m)
+     fuse_offset = 6.0*in_to_m)
 
     #Seats
     # Conditions:
