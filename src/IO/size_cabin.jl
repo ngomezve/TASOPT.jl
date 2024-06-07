@@ -1,5 +1,6 @@
 """
-    place_cabin_seats(pax, Rfuse)
+    place_cabin_seats(pax, Rfuse, seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
 
 Function to calculate the seat arrangement in the cabin and, therefore, the required cabin
 length.
@@ -59,7 +60,7 @@ end # function place_cabin_seats
     arrange_seats(seats_per_row, Rfuse,
      seat_width = 19.0 * in_to_m, 
      aisle_halfwidth = 10.0 * in_to_m,
-     fuse_offset = 10.0*in_to_m)
+     fuse_offset = 6.0*in_to_m)
 
 Helper function to arrange seats given a number of `seats_per_row`
 and fuselage radius. Assumes default `seat_width = 19"` and `aisle_halfwidth = 10"`,
