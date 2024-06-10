@@ -27,7 +27,7 @@ function place_cabin_seats(pax, Rfuse, seat_pitch = 30.0*in_to_m,
     #Calculate the maximum number of seats per row
     seats_per_row = 1
     Dmin = seats_per_row*seat_width + 2*aisle_halfwidth + 2*fuse_offset #Minimum diameter for one passenger
-    while 2*Rfuse > Dmin #While the required diameter is smaller than the fuselage diameter
+    while 2*Rfuse >= Dmin #While the required diameter is smaller than the fuselage diameter
         seats_per_row = seats_per_row + 1 #Add one more seat
         layout = seat_layouts[seats_per_row] #Find corresponding seat layour from seat dict
         Dmin = seats_per_row*seat_width + (length(layout) - 1)*2*aisle_halfwidth + 2*fuse_offset #New minimum diameter
