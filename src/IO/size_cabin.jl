@@ -1,5 +1,6 @@
 """
-    place_cabin_seats(pax, Rfuse)
+    place_cabin_seats(pax, Rfuse, seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
 
 Function to calculate the seat arrangement in the cabin and, therefore, the required cabin
 length.
@@ -26,7 +27,7 @@ function place_cabin_seats(pax, Rfuse, seat_pitch = 30.0*in_to_m,
     #Calculate the maximum number of seats per row
     seats_per_row = 1
     Dmin = seats_per_row*seat_width + 2*aisle_halfwidth + 2*fuse_offset #Minimum diameter for one passenger
-    while 2*Rfuse > Dmin #While the required diameter is smaller than the fuselage diameter
+    while 2*Rfuse >= Dmin #While the required diameter is smaller than the fuselage diameter
         seats_per_row = seats_per_row + 1 #Add one more seat
         layout = seat_layouts[seats_per_row] #Find corresponding seat layour from seat dict
         Dmin = seats_per_row*seat_width + (length(layout) - 1)*2*aisle_halfwidth + 2*fuse_offset #New minimum diameter
@@ -59,7 +60,7 @@ end # function place_cabin_seats
     arrange_seats(seats_per_row, Rfuse,
      seat_width = 19.0 * in_to_m, 
      aisle_halfwidth = 10.0 * in_to_m,
-     fuse_offset = 10.0*in_to_m)
+     fuse_offset = 6.0*in_to_m)
 
 Helper function to arrange seats given a number of `seats_per_row`
 and fuselage radius. Assumes default `seat_width = 19"` and `aisle_halfwidth = 10"`,
