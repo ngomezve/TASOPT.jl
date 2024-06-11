@@ -1320,6 +1320,15 @@ function wsize(ac; itermax=35,
             HXs = hxdesign!(pare, pari, ipdes, HXs)
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
             #With fuel storage in tanks, this is done in the block above.
+            HXs = hxdesign!(pare, pari, ipdes, HXs) #design and off-design HX performance
+
+            #Find and store maximum HX outer diameter to check fit in engine 
+            for HX in HXs
+                if HX.HXgeom.fconc #If HX is in the core
+                    parg[igdHXmax] = max(parg[igdHXmax], HX.HXgeom.D_o)
+                end
+            end
+            
         end
 
         # -----------------------------
