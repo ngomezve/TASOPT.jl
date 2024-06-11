@@ -389,7 +389,6 @@
       const igWfvent = 309
       const igdHXmax = 310
 
-      const igtotal    = 310
       const igexitlimit = 311
 
       const igtotal    = 311
