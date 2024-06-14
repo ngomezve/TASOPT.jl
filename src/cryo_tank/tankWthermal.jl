@@ -180,7 +180,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       end
   
       R_ins_tot = sum(R_ins)  #Total thermal resistance of insulation
-      Req = R_ins_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
+      Req = R_ins_tot + R_liq + Rair # Total equivalent resistance of thermal circuit
 
       #Assemble array with residuals
       F[1] = Q - ΔT / Req #Heat transfer rate residual
