@@ -80,9 +80,6 @@ fuse_tank.Wfuelintank = 1e5
         for i in 1:length(outputs_thermal)
             @test outputs_thermal[i] ≈ outputs_thermal_check[i]
         end
-        println(outputs_size)
-        println(outputs_mech)
-        println(outputs_thermal)
     end
     
     fuse_tank.t_insul = [0.065]
