@@ -449,12 +449,13 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
     pax = parg[igWpay]/parm[imWperpax]
 
-    _, xseats, seats_per_row = place_cabin_seats(pax, parg[igRfuse])
+    wcabin = find_cabin_width(parg[igRfuse], parg[igdRfuse], parg[igwfb], parg[ignfweb], parg[igfloordist]) #Find cabin width
+    _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
     xseats = xseats .+ xseats0
     rows = length(xseats)
 
     println("Seats per row = $seats_per_row, Total rows = $rows")
-    yseats = arrange_seats(seats_per_row, parg[igRfuse])
+    yseats = arrange_seats(seats_per_row, wcabin)
 
     ## Plot
     if ax === nothing
@@ -1389,12 +1390,13 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     #Seats
     pax = parg[igWpay]/parm[imWperpax]
-    _, xseats, seats_per_row = place_cabin_seats(pax, parg[igRfuse])
+    wcabin = find_cabin_width(parg[igRfuse], parg[igdRfuse], parg[igwfb], parg[ignfweb], parg[igfloordist]) #Find cabin width
+    _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
     xseats = xseats .+ xseats0
     rows = length(xseats)
 
     println("Seats per row = $seats_per_row, Total rows = $rows")
-    yseats = arrange_seats(seats_per_row, parg[igRfuse])
+    yseats = arrange_seats(seats_per_row, wcabin)
 
     ## Plot
     if ax === nothing
