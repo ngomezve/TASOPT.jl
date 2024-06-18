@@ -391,6 +391,7 @@
       const igdHXmax = 311
       const igHXaddmassfrac = 312
       const igWHXs = 313
+      const igexitlimit = 314
 
       const igtotal    = 314
 
