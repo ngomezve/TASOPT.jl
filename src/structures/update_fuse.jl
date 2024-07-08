@@ -83,7 +83,7 @@ function update_fuse_for_pax!(pari, parg, fuse_tank)
     if pari[iidoubledeck] == 1 #if the aircraft is a double decker
         xopt, seats_per_row = optimize_double_decker_cabin(parg, parm) #Optimize the floor layout and passenger distributions
 
-        lcyl, _ = find_double_decker_cabin_length(xopt, parg, parm) #Total length is maximum of the two
+        lcyl, _ = find_double_decker_cabin_length(xopt, parg) #Total length is maximum of the two
 
     else
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
@@ -188,7 +188,7 @@ function check_seats_per_row_diff(seats_per_row, x, ac)
     Rfuse = x[1]
     ac.parg[igRfuse] = Rfuse
     try #Sometimes update_fuse_for_pax may fail
-        seats_per_row_rad = update_fuse_for_pax!(ac.pari, ac.parg, ac.parm, ac.fuse_tank)
+        seats_per_row_rad = update_fuse_for_pax!(ac.pari, ac.parg, ac.fuse_tank)
         diff = seats_per_row_rad - seats_per_row
         #println("R = $Rfuse, s = $seats_per_row_rad")
         return diff

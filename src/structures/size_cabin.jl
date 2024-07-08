@@ -204,7 +204,7 @@ passengers on each deck.
     **Outputs:**
     - `maxl::Float64`: required cabin length (m)
 """
-function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
+function find_double_decker_cabin_length(x::Vector{Float64}, parg)
     
     seat_pitch = parg[igseatpitch]
     seat_width = parg[igseatwidth]
@@ -217,7 +217,7 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
     nfweb = parg[ignfweb]
     d_floor = parg[igfloordist]
 
-    paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
+    paxsize = parg[igexitlimit] #maximum number of passengers
 
     paxmain = x[1]
     paxtop = paxsize - paxmain
@@ -260,10 +260,10 @@ If the cross-section is circular, it also optimizes the deck layouts.
     **Outputs:**
     - `xopt::Vector{Float64}`: vector with optimization results
 """
-function optimize_double_decker_cabin(parg, parm)
+function optimize_double_decker_cabin(parg)
     dRfuse = parg[igdRfuse]
 
-    paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
+    paxsize = parg[igexitlimit] #maximum number of passengers
 
     if dRfuse ≈ 0.0 #If the cross-section is circular, the main deck could be anywhere so optimize it
         initial_x = [paxsize/2, -pi/4]
@@ -276,7 +276,7 @@ function optimize_double_decker_cabin(parg, parm)
         upper = [paxsize - 1.0]
     end
 
-    obj(x, grad) = find_double_decker_cabin_length(x, parg, parm)[1] #Objective function is cabin length
+    obj(x, grad) = find_double_decker_cabin_length(x, parg)[1] #Objective function is cabin length
 
     opt = Opt(:GN_AGS, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
     opt.lower_bounds = lower
@@ -293,7 +293,7 @@ function optimize_double_decker_cabin(parg, parm)
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
 
     #Evaluate number of passengers per row in main cabin
-    _, seats_per_row_main = find_double_decker_cabin_length(xopt, parg, parm)
+    _, seats_per_row_main = find_double_decker_cabin_length(xopt, parg)
 
     return xopt, seats_per_row_main
 end
