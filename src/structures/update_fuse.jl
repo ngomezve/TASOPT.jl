@@ -81,7 +81,7 @@ function update_fuse_for_pax!(pari, parg, fuse_tank)
 
     #Find cabin length by placing seats
     if pari[iidoubledeck] == 1 #if the aircraft is a double decker
-        xopt, seats_per_row = optimize_double_decker_cabin(parg, parm) #Optimize the floor layout and passenger distributions
+        xopt, seats_per_row = optimize_double_decker_cabin(parg) #Optimize the floor layout and passenger distributions
 
         lcyl, _ = find_double_decker_cabin_length(xopt, parg) #Total length is maximum of the two
 
