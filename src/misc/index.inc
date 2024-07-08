@@ -388,8 +388,11 @@
       const igfloordist = 309
 
       const igWfvent = 310
+      const igdHXmax = 311
+      const igHXaddmassfrac = 312
+      const igWHXs = 313
 
-      const igtotal    = 310
+      const igtotal    = 313
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
@@ -859,7 +862,7 @@
       ieTft = 241
       iefrecirc = 242
       ierecircT = 243
-      iehlat = 244
+      iehvap = 244
       iePreCorder = 245
       iePreCepsilon = 246
       iePreCMp = 247
@@ -880,8 +883,9 @@
       ieTurbCMp = 262
       ieTurbCDeltah = 263
       ieTurbCDeltap = 264
+      iehvapcombustor = 265
 
-      ietotal = 264
+      ietotal = 265
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

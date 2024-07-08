@@ -106,6 +106,22 @@ mutable struct HX_tubular
       HX_tubular() = new(false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, StructuralAlloy("Al-2219-T87"), 0.0)
 end
 
+# Overload Base.getproperty for convenience
+function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
+      if (sym === :D_o) && getfield(HXgeom, :fconc)
+            A_cs = getfield(HXgeom, :A_cs)
+            D_i = getfield(HXgeom, :D_i)
+            D_o = sqrt(4 * A_cs / pi +D_i^2)
+         return D_o
+      elseif sym === :N_tubes_tot
+            return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :N_t)
+      elseif sym === :tD_i
+            return getfield(HXgeom, :tD_o) -2* getfield(HXgeom, :t) 
+      else
+         return getfield(HXgeom, sym)
+      end
+   end
+
 """
     HX_struct
 
@@ -180,9 +196,6 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
 
-            if isnan(h_lat) #If the latent heat was not specified, assume it is 0
-                  h_lat = 0
-            end
       end
 
       #---------------------------------
@@ -510,10 +523,6 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       if frecirc
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
-
-            if isnan(h_lat) #If the latent heat was not specified, assume it is 0
-                  h_lat = 0
-            end
       end
 
       #---------------------------------
@@ -1067,7 +1076,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       Tc_ft = pare_sl[ieTft]
       frecirc = Bool(pare_sl[iefrecirc])
       recircT = pare_sl[ierecircT]
-      h_lat = pare_sl[iehlat]
+      h_lat = pare_sl[iehvap]
       igas = pari[iifuel]
       PreCorder = pare_sl[iePreCorder]
       PreCepsilon = pare_sl[iePreCepsilon]
@@ -1334,7 +1343,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       end
 
       #---------------------------------
-      # Update fuel temperature
+      # Update fuel temperature and heat of vaporization
       #---------------------------------
 
       for ip = 1:size(pare)[2] #For every mission point
@@ -1345,6 +1354,10 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
 
                   pare[ieTfuel, ip] = Tf
             end
+      end
+
+      if frecirc #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
+            pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
       end
      
       return HeatExchangers
@@ -1376,6 +1389,9 @@ function resetHXs(pare)
       pare[ieTurbCDeltap, :] .= 0.0
       pare[ieRegenDeltah, :] .= 0.0
       pare[ieRegenDeltap, :] .= 0.0
+
+      #Reset heat of vaporization in combustor
+      pare[iehvapcombustor, :, :] = pare[iehvap, :, :]
 
 end
 
@@ -1581,6 +1597,7 @@ function lambdap_calc(pare, alpha_in, ifuel, ip)
       Tt3 = pare_sl[ieTt3]
       Ttf = pare_sl[ieTfuel]
       Tt4 = pare_sl[ieTt4]
+      hvap = pare_sl[iehvapcombustor]
 
       etab = pare[ieetab]
       beta = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
@@ -1606,7 +1623,7 @@ function lambdap_calc(pare, alpha_in, ifuel, ip)
       gamma = copy(buf)
       #
 
-      ffb, lambda = gas_burn(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tt4)
+      ffb, lambda = gas_burn(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tt4, hvap)
 
       lambdap = zeros(nair)
 
