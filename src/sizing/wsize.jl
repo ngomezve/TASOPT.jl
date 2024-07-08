@@ -1320,7 +1320,6 @@ function wsize(ac; itermax=35,
             HXs = hxdesign!(pare, pari, ipdes, HXs)
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
             #With fuel storage in tanks, this is done in the block above.
-            HXs = hxdesign!(pare, pari, ipdes, HXs) #design and off-design HX performance
 
             #Find and store maximum HX outer diameter to check fit in engine 
             for HX in HXs
@@ -1438,7 +1437,6 @@ function wsize(ac; itermax=35,
         parg[igWeng] = Weng
         parg[igWebare] = Webare
         parg[igWnace] = Wnace
-        parg[igWeng] = Weng
         parg[igWHXs] = W_HXs #Store total weight of heat exchangers
 
         # set new nacelle area / reference area  fraction fSnace
