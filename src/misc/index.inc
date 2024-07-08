@@ -392,8 +392,9 @@
       const igdHXmax = 312
       const igHXaddmassfrac = 313
       const igWHXs = 314
+      const igexitlimit = 315
 
-      const igtotal    = 314
+      const igtotal    = 315
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

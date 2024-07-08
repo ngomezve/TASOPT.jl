@@ -52,7 +52,7 @@ function update_fuse!(pari, parg)
 end
 
 """
-    update_fuse_for_pax!(pari, parg, parm, fuse_tank)
+    update_fuse_for_pax!(pari, parg, fuse_tank)
 
 Function to update the fuselage layout when the cabin length is not known a priori, for example if the radius is changed. 
 It sizes the cabin for the design number of passengers.
@@ -61,14 +61,13 @@ It sizes the cabin for the design number of passengers.
     **Inputs:**
     - `pari::Vector{Int64}`: vector with aircraft integer parameters
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
-    - `parm::Array{Float64}`: array with mission parameters
     - `fuse_tank::struct`: structure of type `fuselage_tank` with cryogenic fuel tank parameters
 
     **Outputs:**
     Parameters in `parg` are modified. It also outputs:
     - `seats_per_row::Float64`: number of seats per row in main cabin (lower deck if double decker)
 """
-function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
+function update_fuse_for_pax!(pari, parg, fuse_tank)
 
     seat_pitch = parg[igseatpitch]
     seat_width = parg[igseatwidth]
@@ -88,7 +87,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
 
     else
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
-        paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers
+        paxsize = parg[igexitlimit] #maximum number of passengers
         w = find_cabin_width(Rfuse, wfb, nfweb, θ) #Cabin width
         lcyl, _, seats_per_row = place_cabin_seats(paxsize, w, seat_pitch, seat_width, aisle_halfwidth) #Cabin length
     end
