@@ -208,7 +208,8 @@ passengers on each deck.
     **Outputs:**
     - `maxl::Float64`: required cabin length (m)
 """
-function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
+function find_double_decker_cabin_length(x::Vector{Float64}, parg)
+
     seat_pitch = parg[igseatpitch]
     seat_width = parg[igseatwidth]
     aisle_halfwidth = parg[igaislehalfwidth]
