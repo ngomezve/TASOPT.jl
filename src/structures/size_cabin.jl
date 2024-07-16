@@ -129,7 +129,7 @@ function aisle_flag(idx, layout)
 end
 
 """
-    find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64)
+    find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64, h_seat::Float64)
 
 This function can be used to calculate the width of the passenger cabin from the double-bubble parameters
 and the floor angular position.
@@ -140,13 +140,16 @@ and the floor angular position.
     - `wfb::Float64`: lateral shift of double bubble (m)
     - `nfweb::Float64`: number of vertical webs in fuselage
     - `θ::Float64`: angle of floor wrt upper bubble center (rad)
+    - `h_seat::Float64`: seat height (m)
 
     **Outputs:**
     - `w::Float64`: width of cabin (m).
 """
-function find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64)
+function find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64, h_seat::Float64)
     #Use trigonometry to find cabin width
-    w = nfweb*2*wfb + 2*Rfuse*cos(θ)
+    θseat = asin((h_seat + Rfuse * sin(θ)) / Rfuse)  
+    cosθ = min(cos(θ), cos(θseat)) #For the effective cabin width, take the minimum of the widths at the floor and at the seat height
+    w = nfweb*2*wfb + 2*Rfuse*cosθ
     return w
 end
 
@@ -173,9 +176,10 @@ function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64;
     if dRfuse > 0.0
         θ1 = -asin(dRfuse / (2*Rfuse))
         if fdoubledecker
-            θ2 = asin((h_seat + d_floor - dRfuse/2) / Rfuse)
+            θ2 = asin((d_floor - dRfuse/2) / Rfuse)
             return θ1, θ2
         else
+            println(θ1)
             return θ1
         end  
     else #If there is not a lower bubble
@@ -183,7 +187,7 @@ function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64;
             θ1 = -asin(h_seat / (2*Rfuse)) #This angle maximizes the cabin width
             return θ1
         else #If it is a double decker with no lower bubble, the main cabin could be anywhere => Use provided angle
-            θ2 = asin((h_seat + d_floor + Rfuse * sin(θ1)) / Rfuse)  
+            θ2 = asin((Rfuse * sin(θ1) + d_floor) / Rfuse)  
             return θ1, θ2
         end
     end
@@ -232,18 +236,17 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg)
         end
 
         #Find width of each cabin
-        w1 = find_cabin_width(Rfuse, wfb, nfweb, θ1)
-        w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2)
+        w1 = find_cabin_width(Rfuse, wfb, nfweb, θ1, h_seat)
+        w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2, h_seat)
 
         #Find length of each cabin
         l1, _, pax_per_row_main = place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
         l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch, seat_width, aisle_halfwidth)
 
         maxl = max(l1, l2) #Required length
-        
         return maxl, pax_per_row_main 
     catch
-        return 1e6
+        return 1e6, 1e6
     end
 end
 
@@ -348,7 +351,7 @@ function MinCabinHeightConst(x, parg, minheight = 2.0)
 
         _, θ2 = find_floor_angles(true, Rfuse, dRfuse, θ1 = θ1, h_seat= 0.0, d_floor = d_floor) #The seat height does not need to be included
 
-        hcabin = Rfuse * (1 - sin(θ2))
+        hcabin = Rfuse * (1 - sin(θ2)) + dRfuse #Add dRfuse as it shifts the lower bubble down
 
         constraint = minheight/hcabin - 1.0 #Constraint has to be negative if hcabin > minheight
 
