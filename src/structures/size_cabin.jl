@@ -179,7 +179,6 @@ function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64;
             θ2 = asin((d_floor - dRfuse/2) / Rfuse)
             return θ1, θ2
         else
-            println(θ1)
             return θ1
         end  
     else #If there is not a lower bubble
