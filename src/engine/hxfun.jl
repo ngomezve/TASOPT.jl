@@ -116,7 +116,7 @@ function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
       elseif sym === :N_tubes_tot
             return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :N_t)
       elseif sym === :tD_i
-            return getfield(HXgeom, :tD_o) -2* getfield(HXgeom, :t) 
+            return getfield(HXgeom, :tD_o) - 2* getfield(HXgeom, :t) 
       elseif sym === :L
             return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :xl_D) * getfield(HXgeom, :tD_o)
       else
@@ -577,9 +577,9 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       A_min = A_cs - A_D
       G = ρ_p_in * Vp_in * A_cs / A_min #mass flow rate per unit area at minimum area      
 
-      N_tubes_tot = N_t * n_passes * n_stages #total number of tubes across all rows
+      N_tubes_tot = HXgeom.N_tubes_tot #total number of tubes across all rows
       N_L = n_passes * n_stages #total number of rows
-      L = N_L * xl_D * tD_o #total axial length
+      L =  HXgeom.L #total axial length
 
       Ah = N_tubes_tot * pi * tD_o * l #Total external surface area of cooling tubes
 
@@ -1354,7 +1354,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             end
       end
 
-      if frecirc #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
+      if (frecirc) && (length(HeatExchangers) > 0) #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
             pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
       end
      
@@ -1569,6 +1569,11 @@ function hxweight(gee, HXgeom, fouter)
 
       W_hx = gee * m_t * (1 + fouter)
 
+      if HXgeom.fconc #If the HEX is in the core, add additional mass for the shaft
+            shaft_material = StructuralAlloy("AISI-4340") #Assume shaft is made of 4340 steel
+            W_shaft = gee * shaft_material.ρ * HXgeom.L * HXgeom.D_i^2 * pi / 4 #Weight of the extra shaft length because of the HEX
+            W_hx = W_hx + W_shaft
+      end
       return W_hx
 end #hxweight
 
