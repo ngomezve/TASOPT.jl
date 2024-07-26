@@ -610,9 +610,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             pt19c = pt19 - Δp_PreC
             ht19c = ht19 + Δh_PreC
             Tt19c, Tt19c_ht19c, _ = gas_tsetd(alpha, nair, ht19c, Tt19)
-            st19c, st19c_Tt19c, ht19c, ht29c_Tt29c, cpt19c, cpt19c_Tt19c, Rt19c = gassumd(alpha, nair, Tt19c)
+            st19c, st19c_Tt19c, ht19c, ht19c_Tt19c, cpt19c, cpt19c_Tt19c, Rt19c = gassumd(alpha, nair, Tt19c)
 
-             #Derivatives with respect to pressure are unchanged because pt19c_pt19 = 1
+            #Derivatives with respect to pressure are unchanged because pt19c_pt19 = 1
             pt19c_pt19 = 1.0
             ht19c_ht19 = 1.0
 
@@ -719,10 +719,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             pt25c_mf = pt25_mf * pt25c_pt25
             pt25c_Mi = pt25_Mi * pt25c_pt25
-            pt25c_ml = pt25_ml * pt25c_pt25
       
             # ===============================================================
-            #---- HP compressor flow 25-3
+            #---- HP compressor flow 25c-3
             ephc, ephc_ph, ephc_mh = ecmap(ph, mh, pihcD, mbhcD, Cmaph, ephc0, 1.0, 0.0)
             if (ephc < 0.70)
                   ephc = 0.70
