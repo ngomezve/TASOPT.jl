@@ -166,8 +166,9 @@ pare[iehvapcombustor, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of v
 ranges = readmis("range")
 parm[imRange, :] .= Distance.(ranges)
 
-maxpax = readmis("max_pax")
+maxpax = readmis("max_payload_in_pax_equivalent")
 pax = readmis("pax")
+exitlimit = readmis("exit_limit")
 despax = pax[1] #Design number of passengers
 Wpax =  Force(readmis("weight_per_pax"))
 parm[imWperpax, :] .= Wpax
@@ -176,6 +177,8 @@ parg[igWpaymax] = maxpax * Wpax
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
+fuselage.cabin.design_pax = despax
+fuselage.cabin.exit_limit = exitlimit
 
 ##Takeoff
 takeoff = readmis("Takeoff")
@@ -645,7 +648,7 @@ readvtail(x) = read_input(x, vtail, dvtail)
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
 
-    update_fuse_for_pax!(pari, parg, parm, fuselage, fuse_tank) #update fuselage dimensions
+    update_fuse_for_pax!(pari, parg, fuselage, fuse_tank) #update fuselage dimensions
 end
 # ---------------------------------
 
