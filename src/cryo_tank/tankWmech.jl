@@ -131,7 +131,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 
       #Assemble vector with layer densities
       for i = 1:N
-            rho_insul[i] = insulation_density_calc(material_insul[i])
+            rho_insul[i] = material_insul[i].ρ
       end
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
@@ -443,42 +443,6 @@ function optimize_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64)
       Ninterm = xopt[1]
       return Ninterm
 end
-
-"""
-      insulation_density_calc(material)
-
-This function calculates the density of different insulation materials.
-      
-!!! details "🔃 Inputs and Outputs"
-      **Inputs:**
-      - `material::String`: material name.
-
-      **Outputs:**
-      - `ρ::Float64`: mass density (kg/m^3).
-"""
-function insulation_density_calc(material::String)
-      if lowercase(material) == "rohacell41s"
-            ρ = 35.0 #kg/m^3. From Brewer (1991)
-      elseif lowercase(material) == "polyurethane27"
-            ρ = 27.0 #kg/m^3
-      elseif lowercase(material) == "polyurethane32"
-            ρ = 32.0 #kg/m^3
-      elseif lowercase(material) == "polyurethane35"
-            ρ = 35.0 #kg/m^3
-      elseif lowercase(material) == "mylar"
-            ρ = 1390 #kg/m^3, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
-      elseif lowercase(material) == "vacuum"
-            ρ = 0 #kg/m^3
-      elseif lowercase(material) == "microspheres" 
-            ρ = 69.0 #kg/m^3. From Brewer (1991)
-      else
-            error("Insulation materials currently supported are
-                  [rohacell41S, polyurethane27, polyurethane32, polyurethane35, microspheres, vacuum],
-                  but you supplied $material")
-      end
-      return ρ
-end
-
 """
       find_K1_head(AR)
 
