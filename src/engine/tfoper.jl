@@ -2075,7 +2075,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   pt5, Tt5, ht5, st5, cpt5, Rt5, pcn, 1.0)
 
             if (ht5 < h5)
-                  println("? ht5 h5 = ", ht5, h5)
+                  #println("? ht5 h5 = ", ht5, h5)
             end
 
             u5 = sqrt(2.0 * max(ht5 - h5, 0.0))
