@@ -303,7 +303,7 @@ function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Flo
       u = M * a #freestrean velocity
 
       #Parameters for air
-      R, Pr, γ, cp, _, _ = gasPr("air", Tair)
+      R, Pr, γ, cp, _, _ = gasPr("air", Tair, air_calc = false)
       
       r = Pr^(1/3) #recovery factor for turbulent air
       Taw = Tair * (1 + r*M^2*(γ - 1)/2)  #K, adiabatic wall temperature
@@ -312,7 +312,7 @@ function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Flo
       T_s = Tair * (0.5 * (1 + Tw/Tair) + 0.16 * r * (γ - 1)/2 * M^2) #Reference temperature
       
       #Find properties at reference temperature
-      _, Pr_s, _, cp, μ_s, k_s = gasPr("air", T_s)
+      _, Pr_s, _, cp, μ_s, k_s = gasPr("air", T_s, air_calc = false)
 
       ρ_s = p / (R * T_s) #density at reference temperature
 

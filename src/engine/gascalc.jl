@@ -1099,6 +1099,7 @@ viscosity, thermal conductivity, specific heat, and Prandtl number.
     **Inputs:**
     - `gas::char`: gas name
     - `T::Float64`: temperature (K)
+    - `air_calc::Bool`: flag for whether to calculate air's specific heat (default `true`)
  
     **Outputs:**
     - `R::Float64`: gas constant (J/kg/K)
@@ -1108,7 +1109,7 @@ viscosity, thermal conductivity, specific heat, and Prandtl number.
     - `μ::Float64`: dynamic viscosity (Pa s)
     - `k::Float64`: thermal conductivity (W/m/K) 
 """
-function gasPr(gas, T)
+function gasPr(gas, T; air_calc = true)
       #TODO: replace with new gas model
       if (gas == "air")
             μ0 = 1.716e-5
@@ -1117,10 +1118,14 @@ function gasPr(gas, T)
             S_k = 194
             T0 = 273
 
-            alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
-            nair = 5
-            s, dsdt, ht, dhdt, cp, R = gassum(alpha, nair, T)
-
+            if air_calc 
+                  alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
+                  nair = 5
+                  s, dsdt, ht, dhdt, cp, R = gassum(alpha, nair, T)
+            else
+                  cp = 1006.1
+                  R = 287.48
+            end
       elseif (gas == "co2")
             μ0 = 1.370e-5
             S_μ = 222
