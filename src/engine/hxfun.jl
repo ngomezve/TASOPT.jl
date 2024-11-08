@@ -1035,7 +1035,7 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       vars = [n_passes, N_t, Δp_p, Δp_c, L]
 
       lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
-      upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, 0.5]
+      upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, 0.25]
 
       Iobj = (Pl_p + Pl_c) #Initialize objective function
 
