@@ -23,24 +23,23 @@ function find_mdot_time(t::Float64, pari::Vector{Int64}, parg::Vector{Float64}, 
     times = para[iatime,:]
 
     # Handle cases where t is exactly one of the sample points
-    if t in times
-        return mdots[findfirst(isequal(t), times)]
+    idx = findfirst(==(t), times)
+    if idx !== nothing
+        return mdots[idx]
     end
 
-    #Otherwise interpolate exponentially
-    for i in 1:(length(times)-1)
-        if times[i] <= t < times[i+1]
-            t0, tf = times[i], times[i+1]
-            m0, mf = mdots[i], mdots[i+1]
-
-            if m0 > 0
-                k = log(mf / m0) / (tf - t0)
-                return m0 * exp(k * (t - t0))
-            else
-                return 0.0
-            end
-        end
+    # Find the appropriate interval using binary search
+    idx = searchsortedlast(times, t)
+    if idx == 0 || idx == length(times)  # t is out of bounds
+        return 0.0
     end
+
+    # Get the interpolation interval
+    t0, tf = times[idx], times[idx + 1]
+    m0, mf = mdots[idx], mdots[idx + 1]
+
+    # Perform exponential interpolation
+    return m0 > 0 ? m0 * exp(log(mf / m0) / (tf - t0) * (t - t0)) : 0.0
 
 end
 
