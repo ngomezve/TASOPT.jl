@@ -27,6 +27,11 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
 
     tolerW = 1.0e-8
     errw   = 1.0
+
+    #Initialize para with the design mission values
+    for ip = ipstatic: ipdescentn
+        para[:,ip] = parad[:,ip]
+    end
     
 #------ mission-varying excrescence factors disabled in this version
 #-      ( also commented out in getparm.f )
