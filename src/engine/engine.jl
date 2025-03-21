@@ -5,6 +5,7 @@ required in the aircraft sizing.
 module engine
 
 using NLopt
+using NLsolve
 using Roots
 using LinearAlgebra
 

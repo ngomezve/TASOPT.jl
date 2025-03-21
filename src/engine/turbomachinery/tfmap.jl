@@ -46,9 +46,10 @@ function Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
 
     #---- corrected speed ratio initial guess from spine
     N = m^(1.0 / b)
-
+    dN = 0.0
     #---- converge to actual corrected speed by inverting compressor map function
-    for iter = 1:20
+    itermax = 20
+    for iter = 1:itermax
 
         ms = N^b
         ms_N = b * ms / N
@@ -105,9 +106,14 @@ function Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
 
         end
 
+        if iter == itermax    
+            println("Ncmap: conv.failed.  N, dN =", N, dN)
+            return Nb, Nb_pi, Nb_mb
+        end
+
         N = N + rlx * dN
     end
-    println("Ncmap: conv.failed.  N, dN =", N, dN)
+    
 
 
 end # Ncmap

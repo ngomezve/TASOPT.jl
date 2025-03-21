@@ -178,9 +178,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
       Δp_PreC, Δp_InterC, Δp_Regen)
 
-      #---- ncrowy must be at least as big as ncrowx defined in index.inc
-      ncrowy = 8
-
       # Determine whether we are in AD...
       prod = gee * M0 * T0 * p0 * a0 * Tref * pref * Phiinl * Kinl * pid * pib * pifn * pitn * Gearf
       prod *= pifD * pilcD * pihcD * pihtD * piltD
@@ -194,18 +191,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       prod *= M4a * ruc
       prod *= epsrow[1] * M2 * pif * pilc * pihc * mbf * mblc * mbhc * Tt4 * pt5 * mcore * M25
       T = typeof(prod)
-
-
-      #---- Newton system arrays
-      res = zeros(T, 9, 1)
-      a = zeros(T, 9, 9)
-      rrel = zeros(T, 9)
-      rsav = zeros(T, 9)
-      asav = zeros(T, 9, 10)
-
-      res_dlls = zeros(T, 9)
-      a_dlls = zeros(T, 9, 9)
-
 
       #---- number of gas constituents
       n = 6
@@ -354,7 +339,25 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       if (Mi == 1.0)
             Mi = 0.6
       end
+      if (Pc == 0.0)
+            Pc = max(Pc, 1.000001 * p0)
+      end
 
+      x0 = [pf, pl, ph, mf, ml, mh, Tb, Pc, Mi]
+
+      function turbofan_offdesign(x, mode)
+
+            pf, pl, ph, mf, ml, mh, Tb, Pc, Mi = x
+
+             #---- Newton system arrays
+       res = zeros(T, 9, 1)
+       a = zeros(T, 9, 9)
+       rrel = zeros(T, 9)
+       rsav = zeros(T, 9)
+       asav = zeros(T, 9, 10)
+ 
+       res_dlls = zeros(T, 9)
+       a_dlls = zeros(T, 9, 9)
       #---- total cooling mass flow ratio
       fc = 0.0
 
@@ -374,18 +377,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       fc_ml = 0.0
       fc_mh = 0.0
       fc_Tb = 0.0
-
-      for iter = 1:itmax
+     
       
-            if (iter == -1)
-                  eps1 = 2.0e-7
-                  eps = eps1
-
-                  pf = pf + eps
-                  j = 1
-
-            end
-
             epf = epf0
             eplc = eplc0
             ephc = ephc0
@@ -1729,17 +1722,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                       eplt_Rt45 * Rt45_Mi + eplt_Mi
 
 
-            if (Pc == 0.0)
-                  #----- initial guess for pt5
-                  epi = 1.0 / eplt
-                  pt49, Tt49, ht49, st49, cpt49, Rt49 = gas_delh(lambdap, nair,
-                        pt45, Tt45, ht45, st45, cpt45, Rt45, dhlt, epi)
-                  Pc = pt49 * pitn
-                  Pc = max(Pc, p0 * (1.0 + 0.2 * M0^2)^3.5)
-            end
-
-            Pc = max(Pc, 1.000001 * p0)
-
             pilt = Pc / pt45 / pitn
             pilt_Pc = 1.0 / pt45 / pitn
             pilt_pt45 = -pilt / pt45
@@ -2528,6 +2510,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         u6_ml = (ht5_ml - h6_ml) / u6tmp
                         u6_mh = (ht5_mh - h6_mh) / u6tmp
                         u6_Tb = (ht5_Tb - h6_Tb) / u6tmp
+                        u6_Pc = (ht5_Pc - h6_Pc) / u6
                         u6_Mi = (ht5_Mi - h6_Mi) / u6tmp
                   end
 
@@ -2682,352 +2665,11 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             a[9, 8] = 0.0
             a[9, 9] = mfA_Mi + mlA_Mi
             rrel[9] = res[9, 1]
-
-
-            # ===========================================================================
-
-
-            for i = 1:9
-                  rsav[i] = res[i, 1]
-                  for k = 1:9
-                        asav[i, k] = a[i, k]
-                  end
-            end
-
-
-            if (iter == -2)
-                  for i = 1:9
-                        a_dlls[i, 1] = a[i, 1]
-                        a_dlls[i, 2] = a[i, 2]
-                        a_dlls[i, 3] = a[i, 3]
-                        a_dlls[i, 4] = a[i, 4]
-                        a_dlls[i, 5] = a[i, 5]
-                        a_dlls[i, 6] = a[i, 6]
-                        a_dlls[i, 7] = a[i, 7]
-                        a_dlls[i, 8] = a[i, 8]
-                        a_dlls[i, 9] = a[i, 9]
-                        res_dlls[i] = res[i, 1]
-                  end
-            elseif (iter == -1)
-
-                  for i = 1:9
-                        dd = (res[i, 1] - res_dlls[i]) / eps
-                        aa = (a[i, j] + a_dlls[i, j]) * 0.5
-                        compare(ss, aa, dd)
-                        println("Ja", i, j, aa, ss, "Jd", i, j, dd, ss)
-                  end
-
-                  error("tfoper.jl error due to iter == -1")
-
-            end
-
-
-            if (iter < 0)
-
-                  println("TFOPER: Convergence failed.  iTFspec=", iTFspec)
-
-                  Tt4 = Tb
-                  pt5 = Pc
-                  BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
-
-                  println("pt18 Tt18 =", pt18, Tt18)
-                  println("pt2  Tt2  =", pt2, Tt2)
-                  println("pt25 Tt25 =", pt25, Tt25)
-                  println("pt3  Tt3  =", pt3, Tt3)
-                  println("pt4  Tt4  =", pt4, Tt4)
-                  println("pt41 Tt41 =", pt41, Tt41)
-                  println("pt45 Tt45 =", pt45, Tt45)
-                  println("pt5  Tt5  =", pt5, Tt5)
-                  println("p5        =", p5)
-                  println("FPR  BPR  =", pf, BPR)
-
-                  Lconv = false
-                  return TSFC, Fsp, hfuel, ff,
-                  Feng, mcore,
-                  pif, pilc, pihc,
-                  mbf, mblc, mbhc,
-                  Nbf, Nblc, Nbhc,
-                  Tt0, ht0, pt0, cpt0, Rt0,
-                  Tt18, ht18, pt18, cpt18, Rt18,
-                  Tt19, ht19, pt19, cpt19, Rt19,
-                  Tt2, ht2, pt2, cpt2, Rt2,
-                  Tt21, ht21, pt21, cpt21, Rt21,
-                  Tt25, ht25, pt25, cpt25, Rt25,
-                  Tt3, ht3, pt3, cpt3, Rt3,
-                  Tt4, ht4, pt4, cpt4, Rt4,
-                  Tt41, ht41, pt41, cpt41, Rt41,
-                  Tt45, ht45, pt45, cpt45, Rt45,
-                  Tt49, ht49, pt49, cpt49, Rt49,
-                  Tt5, ht5, pt5, cpt5, Rt5,
-                  Tt7, ht7, pt7, cpt7, Rt7,
-                  u0,
-                  T2, u2, p2, cp2, R2, M2,
-                  T25c, u25c, p25c, cp25c, R25c, M25c,
-                  T5, u5, p5, cp5, R5, M5,
-                  T6, u6, p6, cp6, R6, M6, A6,
-                  T7, u7, p7, cp7, R7, M7,
-                  T8, u8, p8, cp8, R8, M8, A8,
-                  u9, A9,
-                  epf, eplc, ephc, epht, eplt,
-                  etaf, etalc, etahc, etaht, etalt,
-                  Lconv
-            end
-
-            #---- solve Newton system and set Newton deltas
-            res = gaussn(9, 9, a, res, 1)
-
-            dMi = -res[9, 1]
-            if (Mi >= Mimax && dMi > 0.0)
-                  #----- Fan face is approaching choking, possibly due to an iteration transient
-                  #-     Artificially limit it to Mimax
-                  for i = 1:9
-                        res[i, 1] = rsav[i]
-                        for k = 1:9
-                              a[i, k] = asav[i, k]
-                        end
-                  end
-
-                  i = 9
-                  for k = 1:9
-                        a[i, k] = 0.0
-                  end
-                  res[i, 1] = Mi - Mimax
-                  a[i, i] = 1.0
-
-                  res = gaussn(9, 9, a, res, 1)
-            end
-
-
-            dpf = -res[1, 1]
-            dpl = -res[2, 1]
-            dph = -res[3, 1]
-            dmf = -res[4, 1]
-            dml = -res[5, 1]
-            dmh = -res[6, 1]
-            dTb = -res[7, 1]
-            dPc = -res[8, 1]
-            dMi = -res[9, 1]
-
-            #---- max relative change
-            dmax = max(abs(dpf) / pf,
-                  abs(dpl) / pl,
-                  abs(dph) / ph,
-                  abs(dmf) / mf,
-                  abs(dml) / ml,
-                  abs(dmh) / mh,
-                  abs(dTb) / Tb,
-                  abs(dPc) / Pc,
-                  abs(dMi) / Mi)
-
-            #---- max,min allowed changes 
-            pf0 = 0.8
-            pl0 = 0.8
-
-            dpfmax = 0.30 * (pf - pf0)
-            dplmax = 0.25 * (pl - pl0)
-            dphmax = 0.25 * (ph - 1.0)
-            dmfmax = 0.20 * mf
-            dmlmax = 0.20 * ml
-            dmhmax = 0.20 * mh
-            dTbmax = 0.50 * (Tb - Tt3)
-            dPcmax = 1.00 * (Pc - p0)
-            dMimax = 1.001 * (Mimax - Mi)
-
-            dpfmin = -0.30 * (pf - pf0)
-            dplmin = -0.25 * (pl - pl0)
-            dphmin = -0.25 * (ph - 1.0)
-            dmfmin = -0.20 * mf
-            dmlmin = -0.20 * ml
-            dmhmin = -0.20 * mh
-            dTbmin = -0.30 * (Tb - Tt3)
-            dPcmin = -0.50 * (Pc - p0)
-            dMimin = -0.20 * Mi
-
-            #---- set underrelaxation factor, 
-            #-    if needed to limit any one change to its max value
-            rlx = 1.0
-
-
-            if (rlx * dpf > dpfmax)
-                  rlx = dpfmax / dpf
-            end
-            if (rlx * dpl > dplmax)
-                  rlx = dplmax / dpl
-            end
-            if (rlx * dph > dphmax)
-                  rlx = dphmax / dph
-            end
-            if (rlx * dmf > dmfmax)
-                  rlx = dmfmax / dmf
-            end
-            if (rlx * dml > dmlmax)
-                  rlx = dmlmax / dml
-            end
-            if (rlx * dmh > dmhmax)
-                  rlx = dmhmax / dmh
-            end
-            if (rlx * dTb > dTbmax)
-                  rlx = dTbmax / dTb
-            end
-            if (rlx * dPc > dPcmax)
-                  rlx = dPcmax / dPc
-            end
-            if (rlx * dMi > dMimax)
-                  rlx = dMimax / dMi
-            end
-
-            if (rlx * dpf < dpfmin)
-                  rlx = dpfmin / dpf
-            end
-            if (rlx * dpl < dplmin)
-                  rlx = dplmin / dpl
-            end
-            if (rlx * dph < dphmin)
-                  rlx = dphmin / dph
-            end
-            if (rlx * dmf < dmfmin)
-                  rlx = dmfmin / dmf
-            end
-            if (rlx * dml < dmlmin)
-                  rlx = dmlmin / dml
-            end
-            if (rlx * dmh < dmhmin)
-                  rlx = dmhmin / dmh
-            end
-            if (rlx * dTb < dTbmin)
-                  rlx = dTbmin / dTb
-            end
-            if (rlx * dPc < dPcmin)
-                  rlx = dPcmin / dPc
-            end
-            if (rlx * dMi < dMimin)
-                  rlx = dMimin / dMi
-            end
-
-
-
-            rlx = 1.0
-            vrlx = " "
-
-            if (rlx * dpf > dpfmax)
-                  rlx = dpfmax / dpf
-                  vrlx = "pf"
-            end
-            if (rlx * dpl > dplmax)
-                  rlx = dplmax / dpl
-                  vrlx = "pl"
-            end
-            if (rlx * dph > dphmax)
-                  rlx = dphmax / dph
-                  vrlx = "ph"
-            end
-            if (rlx * dmf > dmfmax)
-                  rlx = dmfmax / dmf
-                  vrlx = "mf"
-            end
-            if (rlx * dml > dmlmax)
-                  rlx = dmlmax / dml
-                  vrlx = "ml"
-            end
-            if (rlx * dmh > dmhmax)
-                  rlx = dmhmax / dmh
-                  vrlx = "mh"
-            end
-            if (rlx * dTb > dTbmax)
-                  rlx = dTbmax / dTb
-                  vrlx = "Tb"
-            end
-            if (rlx * dPc > dPcmax)
-                  rlx = dPcmax / dPc
-                  vrlx = "Pc"
-            end
-            if (rlx * dMi > dMimax)
-                  rlx = dMimax / dMi
-                  vrlx = "Mi"
-            end
-
-            if (rlx * dpf < dpfmin)
-                  rlx = dpfmin / dpf
-                  vrlx = "pf"
-            end
-            if (rlx * dpl < dplmin)
-                  rlx = dplmin / dpl
-                  vrlx = "pl"
-            end
-            if (rlx * dph < dphmin)
-                  rlx = dphmin / dph
-                  vrlx = "ph"
-            end
-            if (rlx * dmf < dmfmin)
-                  rlx = dmfmin / dmf
-                  vrlx = "mf"
-            end
-            if (rlx * dml < dmlmin)
-                  rlx = dmlmin / dml
-                  vrlx = "ml"
-            end
-            if (rlx * dmh < dmhmin)
-                  rlx = dmhmin / dmh
-                  vrlx = "mh"
-            end
-            if (rlx * dTb < dTbmin)
-                  rlx = dTbmin / dTb
-                  vrlx = "Tb"
-            end
-            if (rlx * dPc < dPcmin)
-                  rlx = dPcmin / dPc
-                  vrlx = "Pc"
-            end
-            if (rlx * dMi < dMimin)
-                  rlx = dMimin / dMi
-                  vrlx = "Mi"
-            end
-
-            if (Lprint || iter >= itmax - 6)
-                  if (iTFspec == 1)
-                        if (u0 == 0.0)
-                              Finl = 0.0
-                        else
-                              Finl = Phiinl / u0
-                        end
-
-                        pfn = p0 / pt7
-                        p8, T8, h8, s8, cp8, R8 = gas_prat(alpha, nair,
-                              pt7, Tt7, ht7, st7, cpt7, Rt7, pfn, 1.0)
-                        u8 = sqrt(2.0 * max(ht7 - h8, 0.0))
-
-                        pcn = p0 / pt5
-                        p6, T6, h6, s6, cp6, R6 = gas_prat(lambdap, nair,
-                              pt5, Tt5, ht5, st5, cpt5, Rt5, pcn, 1.0)
-                        u6 = sqrt(2.0 * max(ht5 - h6, 0.0))
-
-                        F = ((1.0 + ff) * u6 - u0 + BPR * (u8 - u0)) * mdotl + Finl
-                        Fspec = 0.0
-                  end
-
-                  if (iter == 1)
-                        println("---------------------------------")
-                  end
-                  ru2 = rho2 * u2
-                  ru19 = rho19 * u19
-
-                  println(iter, vrlx, rlx, iTFspec)
-                  println("pf dpf R1 ef", pf, dpf, rrel[1], epf)
-                  println("pl dpl R2 el", pl, dpl, rrel[2], eplc, eplt)
-                  println("ph dph R3 eh", ph, dph, rrel[3], ephc, epht)
-                  println("mf dmf R4   ", mf / mbfD, dmf / mbfD, rrel[4])
-                  println("ml dml R5   ", ml / mblcD, dml / mblcD, rrel[5])
-                  println("mh dmh R6   ", mh / mbhcD, dmh / mbhcD, rrel[6])
-                  println("Tb dTb R7 F ", Tb, dTb, rrel[7], F, Fspec, Tt4)
-                  println("Pc dPc R8 pt", Pc, dPc, rrel[8], pt5, pitn * pt5h)
-                  println("M2 dM2 R9   ", Mi, dMi, rrel[9], ru2, ru19)
-                  println("u0 u5 u7 del", u0, u5, u7, dmax - toler)
-            end
-
-            #---- exit if convergence test is met
-            if (dmax < toler)
-
-                  # ===============================================================
+      
+            if mode == "residual"
+                  return res
+            else
+                   # ===============================================================
                   #---- pick up here if converged normally
 
                   #---- fan nozzle flow 7-8, use alpha mass fraction (air)
@@ -3242,23 +2884,14 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   epf, eplc, ephc, epht, eplt,
                   etaf, etalc, etahc, etaht, etalt,
                   Lconv
-
             end
+      end
 
-            #---- Newton update
-            pf = pf + rlx * dpf
-            pl = pl + rlx * dpl
-            ph = ph + rlx * dph
-            mf = mf + rlx * dmf
-            ml = ml + rlx * dml
-            mh = mh + rlx * dmh
-            Tb = Tb + rlx * dTb
-            Pc = Pc + rlx * dPc
-            Mi = Mi + rlx * dMi
-
-            Mi = min(Mi, Mimax)
-
-      end # with next Newton iteration
+      res_tf(x) = turbofan_offdesign(x, "residual")
+      sol = nlsolve(res_tf, x0, ftol = toler)
+      println(sol.zero)
+      #Evaluate and return final solution
+     return turbofan_offdesign(sol.zero, "solution")
 
 end # tfoper
 
