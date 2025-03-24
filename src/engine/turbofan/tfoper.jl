@@ -348,10 +348,10 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       function turbofan_offdesign(x, mode)
 
             pf, pl, ph, mf, ml, mh, Tb, Pc, Mi = x
-
+      try
              #---- Newton system arrays
-       res = zeros(T, 9, 1)
-       a = zeros(T, 9, 9)
+      a = zeros(9,9)
+       res = zeros(9)
        rrel = zeros(T, 9)
        rsav = zeros(T, 9)
        asav = zeros(T, 9, 10)
@@ -2665,9 +2665,10 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             a[9, 8] = 0.0
             a[9, 9] = mfA_Mi + mlA_Mi
             rrel[9] = res[9, 1]
-      
+
             if mode == "residual"
                   return res
+
             else
                    # ===============================================================
                   #---- pick up here if converged normally
@@ -2885,11 +2886,18 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   etaf, etalc, etahc, etaht, etalt,
                   Lconv
             end
+      catch
+
+            res = 1e9*ones(9)
+            return res
+
+      end
       end
 
       res_tf(x) = turbofan_offdesign(x, "residual")
-      sol = nlsolve(res_tf, x0, ftol = toler)
-      println(sol.zero)
+
+      sol = nlsolve(res_tf, x0; ftol = toler, method=:newton, linesearch=LineSearches.BackTracking())
+      #println(sol.zero)
       #Evaluate and return final solution
      return turbofan_offdesign(sol.zero, "solution")
 
