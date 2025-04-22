@@ -8,6 +8,7 @@ using NLopt
 using Roots
 using NLsolve
 using LinearAlgebra
+using Random
 
 export Engine
 
