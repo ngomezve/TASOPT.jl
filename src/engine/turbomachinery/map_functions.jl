@@ -102,7 +102,7 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
 
     # Define the system of equations: 
     function residuals!(F::Vector{Float64}, x::Vector{Float64})
-        x[1] = clamp(x[1], 0.1, 3.9)
+        x[1] = clamp(x[1], 0.0, 3.9)
         x[2] = clamp(x[2], 0.1, 3.9)
         # Return the residuals for both equations
         F[1] = itp_Wc(x...) - Wc_target 
@@ -111,7 +111,7 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
 
     # Define the Jacobian of the system (partial derivatives)
     function jacobian!(J::Matrix{Float64}, x::Vector{Float64})
-        x[1] = clamp(x[1], 0.1, 3.9)
+        x[1] = clamp(x[1], 0.0, 3.9)
         x[2] = clamp(x[2], 0.1, 3.9)
         # Compute the partial derivatives of W and PR with respect to N and R
         dw_dN, dw_dR = Interpolations.gradient(itp_Wc, x[1], x[2])
@@ -125,10 +125,10 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
     end
 
     # Solve the system of equations using root finding (non-linear solver)
-    sol = nlsolve(residuals!, jacobian!, [Ng, Rg], factor = 0.5, iterations = 100)
+    sol = nlsolve(residuals!, jacobian!, [Ng, Rg], factor = 1.0, iterations = 100)
 
     if ~converged(sol) #Try again from a different initial guess if the first one fails
-        sol = nlsolve(residuals!, jacobian!, [0.5, 2.0], factor = 0.1, iterations = 100)
+        sol = nlsolve(residuals!, jacobian!, [0.5, 2.0], factor = 0.25, iterations = 100)
     end
 
     # Extract the solution: the x and y corresponding to the given Wc_target and PR_target
