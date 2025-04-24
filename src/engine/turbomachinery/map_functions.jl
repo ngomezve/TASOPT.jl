@@ -1,4 +1,4 @@
-using Interpolations, NLsolve
+using Interpolations, NonlinearSolve
 
 """
     MapDefaults
@@ -97,57 +97,59 @@ using a nonlinear solver with Jacobian information from interpolation gradients.
     - `dR_dw::Float64`: ∂R/∂Wc
     - `dR_dpr::Float64`: ∂R/∂PR
 """
-function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpolation, itp_PR::Interpolations.GriddedInterpolation, 
-                                    Wc_target::Float64, PR_target::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
+function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpolation, 
+    itp_PR::Interpolations.GriddedInterpolation, 
+    Wc_target::Float64, PR_target::Float64; 
+    Ng::Float64 = 0.5, Rg::Float64 = 2.0)
 
-    # Define the system of equations: 
-    function residuals!(F::Vector{Float64}, x::Vector{Float64})
-        x[1] = clamp(x[1], 0.0, 3.9)
-        x[2] = clamp(x[2], 0.1, 3.9)
-        # Return the residuals for both equations
-        F[1] = itp_Wc(x...) - Wc_target 
-        F[2] = itp_PR(x...) - PR_target
+    # Residual
+    function f!(F, x, p)
+    F[1] = itp_Wc(x...) - Wc_target
+    F[2] = itp_PR(x...) - PR_target
     end
 
-    # Define the Jacobian of the system (partial derivatives)
-    function jacobian!(J::Matrix{Float64}, x::Vector{Float64})
-        x[1] = clamp(x[1], 0.0, 3.9)
-        x[2] = clamp(x[2], 0.1, 3.9)
-        # Compute the partial derivatives of W and PR with respect to N and R
-        dw_dN, dw_dR = Interpolations.gradient(itp_Wc, x[1], x[2])
-        dpr_dN, dpr_dR = Interpolations.gradient(itp_PR, x[1], x[2])
-        
-        # Return the Jacobian matrix
-        J[1,1] = dw_dN
-        J[1,2] = dw_dR
-        J[2,1] = dpr_dN
-        J[2,2] = dpr_dR
+    # Jacobian
+    function j!(J, x, p)
+    dw_dN, dw_dR = Interpolations.gradient(itp_Wc, x[1], x[2])
+    dpr_dN, dpr_dR = Interpolations.gradient(itp_PR, x[1], x[2])
+    J[1, 1] = dw_dN
+    J[1, 2] = dw_dR
+    J[2, 1] = dpr_dN
+    J[2, 2] = dpr_dR
     end
 
-    # Solve the system of equations using root finding (non-linear solver)
-    sol = nlsolve(residuals!, jacobian!, [Ng, Rg], factor = 1.0, iterations = 100)
+    # Create NonlinearFunction
+    fstruct = NonlinearFunction(f!; jac = j!)
 
-    if ~converged(sol) #Try again from a different initial guess if the first one fails
-        sol = nlsolve(residuals!, jacobian!, [0.5, 2.0], factor = 0.25, iterations = 100)
+    # Set up and solve problem
+    x0 = [Ng, Rg]
+    prob = NonlinearProblem(fstruct, x0, nothing)
+    sol = solve(prob, maxiters=100)
+
+    if sol.retcode != ReturnCode.Success
+    prob = remake(prob; u0 = [0.5, 2.0])
+    sol = solve(prob, TrustRegion(), maxiters = 100)
     end
 
-    # Extract the solution: the x and y corresponding to the given Wc_target and PR_target
-    N_found, R_found = sol.zero
+    x = sol.u
+    N_found, R_found = x
 
-    # Compute the Jacobian at the found solution
     jac = zeros(2, 2)
-    jacobian!(jac, [N_found, R_found])
-
-    # Calculate the derivatives (inverse of the Jacobian matrix)
+    j!(jac, x, nothing)
     jac_inv = inv(jac)
 
-    # The derivatives of N, R with respect to Wc and PR are the components of the inverse Jacobian
     dN_dw, dN_dpr = jac_inv[1, :]
     dR_dw, dR_dpr = jac_inv[2, :]
 
-    return N_found, R_found, dN_dw, dN_dpr, dR_dw, dR_dpr
+    return (
+    Float64(N_found),
+    Float64(R_found),
+    Float64(dN_dw),
+    Float64(dN_dpr),
+    Float64(dR_dw),
+    Float64(dR_dpr)
+    ) :: NTuple{6, Float64}
 end
-
 """
     calculate_compressor_speed_and_efficiency(map, pratio, mb, piD, mbD, NbD, epol0; Ng=0.5, Rg=2.0)
 
