@@ -368,7 +368,7 @@ function MinCargoHeightConst(x, fuse)
     θcargo = -acos(minwidth/(2*Rfuse)) #Angle of cargo hold floor
     hmax = dRfuse + Rfuse * (sin(θ1) - sin(θcargo)) #Maximum height of cargo hold
 
-    constraint = minheight/hmax - 1.0 #Constraint has to be negative if hcargo > minheight
+    constraint = minheight/abs(hmax) - 1.0 #Constraint has to be negative if hcargo > minheight
     return constraint
 end
 
