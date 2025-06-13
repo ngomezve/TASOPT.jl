@@ -502,9 +502,11 @@
       const iePfanmax = 242
       const ieTSEC = 243
       const ieHXrecircP = 244
-      const ieConvFail = 245
+      const iefc0 = 245
+      const iedehtdfc = 246
+      const ieConvFail = 247
 
-      const ietotal = 245
+      const ietotal = 247
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
