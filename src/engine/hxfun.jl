@@ -1443,7 +1443,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
             for ip = 1:size(pare)[2] #For every mission point
                   if length(HeatExchangers) > 0
                         lastHX = HeatExchangers[end]
-                        HXgas = lastHX.HXgas_mission[ip]
+                        HXgas = lastHX.HXgas_mission[ip, imission]
                         Tf = HXgas.Tc_out
 
                         pare[ieTfuel, ip] = (1 - rlx) * pare[ieTfuel, ip] + rlx * Tf
